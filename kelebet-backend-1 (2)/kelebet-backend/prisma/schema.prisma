@@ -1,0 +1,192 @@
+// Kelebet Pharmacy — Database Schema
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS ────────────────────────────────────────────────────
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  password      String
+  role          Role     @default(CUSTOMER)
+  address       String?
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders        Order[]
+  prescriptions Prescription[]
+  cart          CartItem[]
+  reviews       Review[]
+
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  PHARMACIST
+  ADMIN
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+// ─── PRODUCTS (Medicines) ─────────────────────────────────────
+model Product {
+  id                String   @id @default(uuid())
+  name              String
+  genericName       String?
+  description       String?
+  categoryId        String
+  price             Float
+  salePrice         Float?
+  stock             Int      @default(0)
+  unit              String   @default("tablet")  // tablet, syrup, capsule, etc.
+  dosage            String?  // e.g. "500mg"
+  manufacturer      String?
+  requiresPrescription Boolean @default(false)
+  isActive          Boolean  @default(true)
+  imageUrl          String?
+  barcode           String?  @unique
+  expiryDate        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  category          Category   @relation(fields: [categoryId], references: [id])
+  orderItems        OrderItem[]
+  cartItems         CartItem[]
+  reviews           Review[]
+
+  @@map("products")
+}
+
+// ─── PRESCRIPTIONS ────────────────────────────────────────────
+model Prescription {
+  id            String             @id @default(uuid())
+  userId        String
+  imageUrl      String             // uploaded image
+  doctorName    String?
+  hospitalName  String?
+  status        PrescriptionStatus @default(PENDING)
+  notes         String?
+  pharmacistId  String?
+  verifiedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+  orders        Order[]
+
+  @@map("prescriptions")
+}
+
+enum PrescriptionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── ORDERS ───────────────────────────────────────────────────
+model Order {
+  id             String      @id @default(uuid())
+  userId         String
+  prescriptionId String?
+  status         OrderStatus @default(PENDING)
+  totalAmount    Float
+  deliveryFee    Float       @default(0)
+  address        String
+  phone          String
+  notes          String?
+  paymentMethod  String      @default("CHAPA")
+  paymentStatus  PaymentStatus @default(UNPAID)
+  paymentRef     String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id])
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+  items          OrderItem[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+// ─── ORDER ITEMS ──────────────────────────────────────────────
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// ─── CART ─────────────────────────────────────────────────────
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+// ─── REVIEWS ──────────────────────────────────────────────────
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int      // 1–5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}

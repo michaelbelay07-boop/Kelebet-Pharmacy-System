@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Kelebet Pharmacy",
+    "slug": "kelebet-pharmacy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#006B3C"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kelebet.pharmacy",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to upload prescription photos",
+        "NSPhotoLibraryUsageDescription": "Used to select prescription images"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#006B3C"
+      },
+      "package": "com.kelebet.pharmacy",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Kelebet to access your camera for prescriptions."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Kelebet to access your photos for prescriptions."
+        }
+      ],
+      "expo-secure-store",
+      "expo-status-bar"
+    ]
+  }
+}
